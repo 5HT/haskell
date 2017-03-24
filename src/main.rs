@@ -11,6 +11,7 @@ extern crate test;
 use vm::execute_main_module;
 #[cfg(not(test))]
 use getopts::Options;
+use getopts::Fail;
 
 #[macro_escape]
 macro_rules! write_core_expr(
@@ -65,12 +66,13 @@ fn main() {
     opts.optflag("i", "interactive", "Starts the REPL");
     opts.optflag("h", "help", "Print help");
 
-    let matches = {
-        let args: Vec<_> = std::env::args()
-            .collect();
-        opts.parse(args.tail())
-            .unwrap_or_else(|err| panic!("{}", err))
-    };
+    let args: Vec<_> = std::env::args().collect();
+
+    if let Some((first, elements)) = args.split_first() {
+
+    println!("{:?} {:?}",first,elements);
+
+    let matches = opts.parse(elements).unwrap_or_else(|err| panic!("{}", err));
 
     if matches.opt_present("h") {
         println!("Usage: vm [OPTIONS|EXPRESSION] {}", opts.usage(""));
@@ -93,5 +95,6 @@ fn main() {
     }
     let expr_str = &*matches.free[0];
     repl::run_and_print_expr(expr_str);
+    }
 }
 

@@ -8,6 +8,7 @@ use core::translate::*;
 use lambda_lift::*;
 use parser::Parser;
 use renamer::{Name, rename_expr};
+use std::io::BufRead;
 
 ///Returns whether the type in question is an IO action
 fn is_io(typ: &Type<Name>) -> bool {
@@ -32,7 +33,7 @@ fn compile_expr(prelude: &Assembly, expr_str: &str) -> Result<Assembly, VMError>
     try!(type_env.typecheck_expr(&mut expr));
     let temp_module = Module::from_expr(translate_expr(expr));
     let m = do_lambda_lift(temp_module);
-    
+
     let mut compiler = Compiler::new();
     compiler.assemblies.push(prelude);
     Ok(compiler.compile_module(&m))
@@ -81,12 +82,10 @@ pub fn start() {
         Ok(prelude) => { vm.add_assembly(prelude); }
         Err(err) => println!("Failed to compile the prelude\nReason: {}", err)
     }
-    for line in ::std::io::stdin().lock().lines() {
-        let expr_str = match line {
-            Ok(l) => l,
-            Err(e) => panic!("Reading line failed with '{:?}'", e)
-        };
-        let assembly = match compile_expr(vm.get_assembly(0), expr_str.as_ref()) {
+    let a = ::std::io::stdin();
+    for x in a.lock().lines() {
+        let line = x.unwrap();
+        let assembly = match compile_expr(vm.get_assembly(0), line.as_ref()) {
             Ok(assembly) => assembly,
             Err(err) => {
                 println!("{}", err);
